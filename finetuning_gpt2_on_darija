@@ -1,0 +1,354 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Niceblueman/Niceblueman/blob/main/finetuning_gpt2_on_darija\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "scape data"
+      ],
+      "metadata": {
+        "id": "ev81ZCO4yCMM"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Mount Google Drive\n",
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')\n",
+        "\n",
+        "!pip install beautifulsoup4 feedparser requests\n",
+        "# Iterate over each post link\n",
+        "import feedparser\n",
+        "import requests\n",
+        "import os.path\n",
+        "from bs4 import BeautifulSoup"
+      ],
+      "metadata": {
+        "id": "8Jw8aKg23UvG",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "f2ccc8ec-e547-456c-edbf-50d676fb0a90"
+      },
+      "execution_count": 2,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Mounted at /content/drive\n",
+            "Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.10/dist-packages (4.11.2)\n",
+            "Collecting feedparser\n",
+            "  Downloading feedparser-6.0.10-py3-none-any.whl (81 kB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m81.1/81.1 kB\u001b[0m \u001b[31m5.2 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hRequirement already satisfied: requests in /usr/local/lib/python3.10/dist-packages (2.27.1)\n",
+            "Requirement already satisfied: soupsieve>1.2 in /usr/local/lib/python3.10/dist-packages (from beautifulsoup4) (2.4.1)\n",
+            "Collecting sgmllib3k (from feedparser)\n",
+            "  Downloading sgmllib3k-1.0.0.tar.gz (5.8 kB)\n",
+            "  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "Requirement already satisfied: urllib3<1.27,>=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests) (1.26.16)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests) (2023.5.7)\n",
+            "Requirement already satisfied: charset-normalizer~=2.0.0 in /usr/local/lib/python3.10/dist-packages (from requests) (2.0.12)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/dist-packages (from requests) (3.4)\n",
+            "Building wheels for collected packages: sgmllib3k\n",
+            "  Building wheel for sgmllib3k (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for sgmllib3k: filename=sgmllib3k-1.0.0-py3-none-any.whl size=6046 sha256=15c26c0fb8bce411eaa296a93c57bce748ce24cf7a647dc08f3f28ee01018aa2\n",
+            "  Stored in directory: /root/.cache/pip/wheels/f0/69/93/a47e9d621be168e9e33c7ce60524393c0b92ae83cf6c6e89c5\n",
+            "Successfully built sgmllib3k\n",
+            "Installing collected packages: sgmllib3k, feedparser\n",
+            "Successfully installed feedparser-6.0.10 sgmllib3k-1.0.0\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "# Define the RSS feed file\n",
+        "with open(\"/content/drive/MyDrive/9esa.com_rss.xml\", 'r', encoding='utf-8') as file:\n",
+        "    sentences = file.read()\n",
+        "data_file = '/content/drive/MyDrive/datasets/dataset_darija_stories.txt'\n",
+        "# Parse the RSS feed\n",
+        "feed = feedparser.parse(sentences)\n",
+        "# Extract the post links\n",
+        "post_links = [entry.link for entry in feed.entries]\n",
+        "print(post_links)\n",
+        "# Print the post links\n",
+        "for link in post_links:\n",
+        "    post_response = requests.get(link)\n",
+        "    if post_response.status_code != 200:\n",
+        "        print(\"Error accessing post:\", link)\n",
+        "        continue\n",
+        "\n",
+        "    # Create BeautifulSoup object with the post's HTML content\n",
+        "    post_soup = BeautifulSoup(post_response.content, 'html.parser')\n",
+        "\n",
+        "    # Find all \".Noto p\" elements and extract their text\n",
+        "    paragraphs = post_soup.select('.Noto p')\n",
+        "    text = '\\n'.join([p.get_text(strip=True) for p in paragraphs])\n",
+        "\n",
+        "    # Save the extracted text to the output file\n",
+        "    with open(data_file, 'a', encoding='utf-8') as file:\n",
+        "      file.write(text + '\\n\\n')"
+      ],
+      "metadata": {
+        "id": "3TDELWvByE42",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "dd9a179a-6cc7-4a50-fbc1-41e3d383dc56"
+      },
+      "execution_count": 3,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "['https://www.9esa.com/2023/07/la-tojbirni-3ala-7obik-20.html', 'https://www.9esa.com/2023/07/3ers-dib-28.html', 'https://www.9esa.com/2023/07/3asifa-hawja2-28.html', 'https://www.9esa.com/2023/07/ghirk-ma-y7lali-28.html', 'https://www.9esa.com/2023/07/la-tojbirni-3ala-7obik-19.html', 'https://www.9esa.com/2023/07/3ers-dib-27.html', 'https://www.9esa.com/2023/07/3asifa-hawja2-27.html', 'https://www.9esa.com/2023/07/ghirk-ma-y7lali-27.html', 'https://www.9esa.com/2023/07/la-tojbirni-3ala-7obik-18.html', 'https://www.9esa.com/2023/07/3ers-dib-26.html', 'https://www.9esa.com/2023/07/3asifa-hawja2-26.html', 'https://www.9esa.com/2023/07/ghirk-ma-y7lali-26.html', 'https://www.9esa.com/2023/07/la-tojbirni-3ala-7obik-17.html', 'https://www.9esa.com/2023/07/3ers-dib-25.html', 'https://www.9esa.com/2023/07/3asifa-hawja2-25.html', 'https://www.9esa.com/2023/07/ghirk-ma-y7lali-25.html', 'https://www.9esa.com/2023/07/la-tojbirni-3ala-7obik-16.html', 'https://www.9esa.com/2023/07/3ers-dib-24.html', 'https://www.9esa.com/2023/07/3asifa-hawja2-24.html', 'https://www.9esa.com/2023/07/ghirk-ma-y7lali-24.html', 'https://www.9esa.com/2023/06/la-tojbirni-3ala-7obik-15.html', 'https://www.9esa.com/2023/06/3ers-dib-23.html', 'https://www.9esa.com/2023/06/3asifa-hawja2-23.html', 'https://www.9esa.com/2023/06/ghirk-ma-y7lali-23.html', 'https://www.9esa.com/2023/06/la-tojbirni-3ala-7obik-14.html']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "> **Finetuning gpt2 on darija sentence's with tests included**"
+      ],
+      "metadata": {
+        "id": "mwYoI-caZKDy"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "luXwmWV_L31z",
+        "outputId": "277c5b93-6cc4-4b75-e871-c874a87e2614"
+      },
+      "execution_count": 1,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Mounted at /content/drive\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Install required packages\n",
+        "!pip install torch torchvision transformers\n",
+        "import torch\n",
+        "from torch.nn.utils.rnn import pad_sequence\n",
+        "from torch.utils.data import Dataset, DataLoader\n",
+        "from transformers import GPT2Tokenizer, GPT2LMHeadModel, GPT2Config, AdamW"
+      ],
+      "metadata": {
+        "id": "5lvfFbUnL_Uz"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!jupyter notebook --NotebookApp.iopub_data_rate_limit=10000000\n",
+        "# Step 1: Load and preprocess the dataset\n",
+        "data_file = '/content/drive/MyDrive/datasets/dataset_darija_stories.txt'\n",
+        "\n",
+        "with open(data_file, 'r', encoding='utf-8') as file:\n",
+        "    sentences = file.readlines()\n",
+        "    print(sentences[0:10])"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "fjJ94tBYMD75",
+        "outputId": "0bae454d-b078-4305-c7a1-4764dd025517"
+      },
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "|DEBUG|Paths used for configuration of jupyter_notebook_config: \n",
+            "    \t/etc/jupyter/jupyter_notebook_config.json\n",
+            "|DEBUG|Paths used for configuration of jupyter_notebook_config: \n",
+            "    \t/usr/local/etc/jupyter/jupyter_notebook_config.d/panel-client-jupyter.json\n",
+            "    \t/usr/local/etc/jupyter/jupyter_notebook_config.json\n",
+            "|DEBUG|Paths used for configuration of jupyter_notebook_config: \n",
+            "    \t/usr/etc/jupyter/jupyter_notebook_config.json\n",
+            "|DEBUG|Paths used for configuration of jupyter_notebook_config: \n",
+            "    \t/root/.local/etc/jupyter/jupyter_notebook_config.json\n",
+            "|DEBUG|Paths used for configuration of jupyter_notebook_config: \n",
+            "    \t/root/.jupyter/jupyter_notebook_config.json\n",
+            "|INFO|google.colab serverextension initialized.\n",
+            "|INFO|Serving notebooks from local directory: /content\n",
+            "|INFO|Jupyter Notebook 6.4.8 is running at:\n",
+            "|INFO|http://localhost:8888/?token=c5b41725b53078d9651f8f66af94215b8d565c15630f5325\n",
+            "|INFO| or http://127.0.0.1:8888/?token=c5b41725b53078d9651f8f66af94215b8d565c15630f5325\n",
+            "|INFO|Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).\n",
+            "|CRITICAL|\n",
+            "    \n",
+            "    To access the notebook, open this file in a browser:\n",
+            "        file:///root/.local/share/jupyter/runtime/nbserver-1930-open.html\n",
+            "    Or copy and paste one of these URLs:\n",
+            "        http://localhost:8888/?token=c5b41725b53078d9651f8f66af94215b8d565c15630f5325\n",
+            "     or http://127.0.0.1:8888/?token=c5b41725b53078d9651f8f66af94215b8d565c15630f5325\n",
+            "|CRITICAL|received signal 2, stopping\n",
+            "|INFO|interrupted\n",
+            "|CRITICAL|Shutting down...\n",
+            "|INFO|Shutting down 0 kernels\n",
+            "|INFO|Shutting down 0 terminals\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "IOPub data rate exceeded.\n",
+            "The notebook server will temporarily stop sending output\n",
+            "to the client in order to avoid crashing it.\n",
+            "To change this limit, set the config variable\n",
+            "`--NotebookApp.iopub_data_rate_limit`.\n",
+            "\n",
+            "Current values:\n",
+            "NotebookApp.iopub_data_rate_limit=1000000.0 (bytes/sec)\n",
+            "NotebookApp.rate_limit_window=3.0 (secs)\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Set up GPU if available\n",
+        "device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")\n",
+        "\n",
+        "# Step 2: Tokenize the sentences\n",
+        "tokenizer = GPT2Tokenizer.from_pretrained('gpt2')\n",
+        "tokenized_sentences = [tokenizer.encode(sentence) for sentence in sentences]\n",
+        "\n",
+        "# Step 3: Define a custom PyTorch Dataset\n",
+        "class DarijaDataset(Dataset):\n",
+        "    def __init__(self, tokenized_sentences):\n",
+        "        self.tokenized_sentences = tokenized_sentences\n",
+        "\n",
+        "    def __len__(self):\n",
+        "        return len(self.tokenized_sentences)\n",
+        "\n",
+        "    def __getitem__(self, idx):\n",
+        "        return torch.tensor(self.tokenized_sentences[idx])\n",
+        "\n",
+        "# Step 4: Prepare the GPT-2 model\n",
+        "config = GPT2Config.from_pretrained('gpt2')\n",
+        "model = GPT2LMHeadModel.from_pretrained('gpt2', config=config)\n",
+        "model.to(device)\n",
+        "\n",
+        "# Step 5: Set up the fine-tuning pipeline\n",
+        "dataset = DarijaDataset(tokenized_sentences)\n",
+        "batch_size = 4\n",
+        "num_epochs = 3\n",
+        "\n",
+        "# Define custom collate function to pad sequences dynamically\n",
+        "def collate_fn(batch):\n",
+        "    padded_batch = pad_sequence(batch, batch_first=True)\n",
+        "    return padded_batch\n",
+        "\n",
+        "dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)\n",
+        "\n",
+        "optimizer = AdamW(model.parameters(), lr=1e-5)\n",
+        "\n",
+        "# Step 6: Fine-tune the GPT-2 model\n",
+        "model.train()\n",
+        "for epoch in range(num_epochs):\n",
+        "    total_loss = 0\n",
+        "    for batch in dataloader:\n",
+        "        batch = batch.to(device)\n",
+        "        outputs = model.forward(input_ids=batch[:, :-1], labels=batch[:, 1:])\n",
+        "        loss = outputs.loss\n",
+        "        total_loss += loss.item()\n",
+        "\n",
+        "        optimizer.zero_grad()\n",
+        "        loss.backward()\n",
+        "        optimizer.step()\n",
+        "\n",
+        "    avg_loss = total_loss / len(dataloader)\n",
+        "    print(f\"Epoch {epoch + 1} - Average Loss: {avg_loss:.4f}\")\n",
+        "\n",
+        "# Step 7: Save the fine-tuned model\n",
+        "output_dir = '/content/drive/MyDrive/dataset/fine_tuned_model'\n",
+        "model.save_pretrained(output_dir)\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "gxO0dp3-ZgQi"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "__*now let test our model*__"
+      ],
+      "metadata": {
+        "id": "4hGruilklru7"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Step 8: Inference and generation using the fine-tuned model\n",
+        "Load the fine-tuned model for future use\n",
+        "fine_tuned_model = GPT2LMHeadModel.from_pretrained(output_dir)\n",
+        "\n",
+        "# Generate text using the fine-tuned model\n",
+        "inputs = tokenizer.encode(\"Your input prompt\", return_tensors=\"pt\").to(device)\n",
+        "generated_text = fine_tuned_model.generate(inputs, max_length=100)"
+      ],
+      "metadata": {
+        "id": "ar6FummElmYO"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "gpuType": "T4",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "accelerator": "GPU"
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
