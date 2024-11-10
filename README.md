@@ -1,8 +1,4 @@
 ### Hi there 👋
-**Niceblueman/Niceblueman** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
-
-Here are some ideas to get you started:
-
 - 🔭 I’m currently working on whatsapp bot without business api
 - 🌱 I’m currently learning go lang and protobuf by google
 - 👯 I’m looking to collaborate on FHP app for tracking freelance time spend
